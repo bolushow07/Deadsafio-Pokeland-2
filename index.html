@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deadsafio 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E3350D;
+    --dark-red: #8B1A05;
+    --yellow: #FFD700;
+    --dark: #1a1a2e;
+    --darker: #0f0f1a;
+    --card-bg: #16213e;
+    --border: #0f3460;
+    --text: #e0e0e0;
+    --muted: #8a8a9a;
+    --slot-empty: #0d1b2a;
+    --slot-border: #1e3a5f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--darker);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(227,53,13,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 3rem 0 2.5rem;
+  }
+
+  .pokeball-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem;
+    animation: spin 8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    color: var(--yellow);
+    text-shadow:
+      3px 3px 0 var(--dark-red),
+      -1px -1px 0 rgba(0,0,0,0.5);
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes titleGlow {
+    from { text-shadow: 3px 3px 0 var(--dark-red), 0 0 20px rgba(255,215,0,0.2); }
+    to   { text-shadow: 3px 3px 0 var(--dark-red), 0 0 40px rgba(255,215,0,0.5); }
+  }
+
+  .subtitle {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--red), transparent);
+  }
+  .divider span {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    color: var(--red);
+    white-space: nowrap;
+  }
+
+  /* PARTICIPANTS GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 500px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .participant-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .participant-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--red);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: rgba(227,53,13,0.12);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .trainer-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    color: #fff;
+    flex-shrink: 0;
+    border: 2px solid var(--yellow);
+  }
+
+  .trainer-info h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .trainer-info p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .progress-pill {
+    margin-left: auto;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    color: var(--yellow);
+    white-space: nowrap;
+  }
+
+  /* POKEMON SLOTS */
+  .slots {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    padding: 1rem;
+  }
+
+  .slot {
+    aspect-ratio: 1;
+    background: var(--slot-empty);
+    border: 1px dashed var(--slot-border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slot:hover {
+    border-color: var(--muted);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .slot-number {
+    font-size: 0.5rem;
+    color: var(--slot-border);
+    font-family: 'Press Start 2P', monospace;
+    position: absolute;
+    top: 4px;
+    left: 5px;
+  }
+
+  .slot-icon {
+    width: 32px;
+    height: 32px;
+    opacity: 0.12;
+  }
+
+  .slot-label {
+    font-size: 0.6rem;
+    color: var(--slot-border);
+    text-align: center;
+  }
+
+  /* Stats bar at bottom */
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat {
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--yellow);
+  }
+  .stat-lbl {
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* dead skull overlay for filled slots (demo) */
+  .slot.dead {
+    background: rgba(139,26,5,0.15);
+    border: 1px solid rgba(227,53,13,0.4);
+    border-style: solid;
+  }
+  .slot.dead .slot-icon { opacity: 0.4; }
+
+  /* Filled Pokémon slots */
+  .slot.filled {
+    background: rgba(227,53,13,0.07);
+    border: 1px solid rgba(227,53,13,0.3);
+    border-style: solid;
+    cursor: pointer;
+  }
+  .slot.filled:hover {
+    background: rgba(227,53,13,0.15);
+    border-color: rgba(227,53,13,0.6);
+    transform: scale(1.05);
+  }
+  .poke-sprite {
+    width: 52px;
+    height: 52px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(0 0 4px rgba(227,53,13,0.4));
+    transition: filter 0.2s;
+  }
+  .slot.filled:hover .poke-sprite {
+    filter: drop-shadow(0 0 8px rgba(255,215,0,0.6));
+  }
+  .poke-name {
+    font-size: 0.45rem;
+    color: #e0e0e0;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .fernando-card { border-color: rgba(227,53,13,0.4); }
+  .sergio-card { border-color: rgba(21,101,192,0.4); }
+  .juan-card { border-color: rgba(46,125,50,0.4); }
+
+  /* GRUPOS */
+  .grupos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .grupo-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .grupo-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: var(--yellow);
+    background: rgba(227,53,13,0.12);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1.25rem;
+    text-shadow: 1px 1px 0 var(--dark-red);
+  }
+  .grupo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .grupo-table thead th {
+    padding: 0.45rem 0.5rem;
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+  }
+  .grupo-table th.col-name,
+  .grupo-table td.col-name {
+    text-align: left;
+    padding-left: 1.25rem;
+    min-width: 120px;
+    font-weight: 700;
+  }
+  .grupo-table tbody td {
+    padding: 0.55rem 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text);
+  }
+  .grupo-table tbody tr:last-child td { border-bottom: none; }
+  .grupo-table td.col-pt {
+    font-weight: 700;
+    color: var(--yellow);
+  }
+  .row-first td { background: rgba(255,215,0,0.05); }
+  .row-second td { background: rgba(227,53,13,0.04); }
+  .row-third td { background: transparent; color: var(--muted); }
+
+  /* BRACKET */
+  .bracket-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1.25rem;
+    align-items: start;
+  }
+  .bracket-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .bracket-final {
+    border-color: rgba(255,215,0,0.4);
+    box-shadow: 0 0 18px rgba(255,215,0,0.08);
+  }
+  .bracket-round-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    color: var(--red);
+    background: rgba(227,53,13,0.12);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .bracket-final .bracket-round-label {
+    color: var(--yellow);
+    background: rgba(255,215,0,0.08);
+    border-color: rgba(255,215,0,0.2);
+  }
+  .bracket-match {
+    padding: 0.75rem 1rem;
+  }
+  .bracket-team {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .bracket-team:last-child { margin-bottom: 0; }
+  .bracket-team.winner {
+    background: rgba(227,53,13,0.15);
+    border: 1px solid rgba(227,53,13,0.4);
+    color: #fff;
+  }
+  .bracket-final .bracket-team.winner {
+    background: rgba(255,215,0,0.12);
+    border-color: rgba(255,215,0,0.5);
+    color: var(--yellow);
+  }
+  .bracket-team.loser {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    color: var(--muted);
+  }
+  .bracket-score {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    margin-left: 0.5rem;
+  }
+  .bracket-match-final .bracket-team { padding: 0.6rem 0.75rem; font-size: 0.9rem; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .modal {
+    background: #16213e;
+    border: 1px solid rgba(227,53,13,0.5);
+    border-radius: 16px;
+    width: min(480px, 92vw);
+    overflow: hidden;
+    animation: slideUp 0.25s ease;
+    position: relative;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity:0; }
+    to   { transform: translateY(0);    opacity:1; }
+  }
+  .modal-header {
+    background: rgba(227,53,13,0.12);
+    border-bottom: 1px solid rgba(227,53,13,0.25);
+    padding: 1.25rem 1.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .modal-sprite {
+    width: 80px; height: 80px;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 8px rgba(227,53,13,0.5));
+  }
+  .modal-title-block { flex: 1; }
+  .modal-nickname {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    color: #FFD700;
+    text-shadow: 2px 2px 0 #8B1A05;
+    margin-bottom: 4px;
+  }
+  .modal-species { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .modal-close {
+    background: rgba(227,53,13,0.2);
+    border: 1px solid rgba(227,53,13,0.4);
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    color: #e0e0e0; font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s; flex-shrink: 0;
+  }
+  .modal-close:hover { background: rgba(227,53,13,0.5); }
+  .modal-body { padding: 1.25rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+  .modal-section-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem; color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 6px;
+  }
+  .modal-attacks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .attack-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 6px 10px;
+    font-size: 0.8rem; color: #e0e0e0; font-weight: 600; text-align: center;
+  }
+  .modal-row {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 8px 12px;
+  }
+  .modal-row-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+  .modal-row-label { font-size: 0.65rem; color: var(--muted); min-width: 65px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .modal-row-value { font-size: 0.85rem; font-weight: 700; color: #e0e0e0; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <!-- Pokéball SVG -->
+    <svg class="pokeball-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="30" stroke="#FFD700" stroke-width="2" fill="none"/>
+      <path d="M2 32 Q2 8 32 2 Q62 8 62 32" fill="#E3350D" opacity="0.9"/>
+      <path d="M2 32 Q2 56 32 62 Q62 56 62 32" fill="#1a1a2e" opacity="0.9"/>
+      <rect x="2" y="30" width="60" height="4" fill="#FFD700"/>
+      <circle cx="32" cy="32" r="9" fill="#1a1a2e" stroke="#FFD700" stroke-width="2"/>
+      <circle cx="32" cy="32" r="5" fill="#FFD700" opacity="0.6"/>
+    </svg>
+
+    <h1 class="title">DEADSAFIO 2</h1>
+    <p class="subtitle">Nuzlocke · 6 entrenadores · 10 Pokémon cada uno</p>
+  </header>
+
+  <div class="divider"><span>⚔ PARTICIPANTES ⚔</span></div>
+
+  <div class="grid">
+
+    <!-- PARTICIPANTE 1: SERGIO -->
+    <div class="participant-card" style="border-color:rgba(227,53,13,0.4);">
+      <div class="card-header">
+        <div class="trainer-avatar" style="background: linear-gradient(135deg,#E3350D,#ff6b35); font-size:0.55rem;">SER</div>
+        <div class="trainer-info">
+          <h2>Sergio</h2>
+          <p>Entrenador · 10 Pokémon</p>
+        </div>
+        <span class="progress-pill" style="background:rgba(227,53,13,0.2);border-color:rgba(227,53,13,0.5);color:#ff6b35;">10 / 10</span>
+      </div>
+      <div class="slots">
+        <div class="slot filled" title="Excadrill" onclick="openModal('Casillas')">
+          <span class="slot-number">01</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/530.png" class="poke-sprite" alt="Excadrill">
+          <span class="slot-label poke-name">Casillas</span>
+        </div>
+        <div class="slot filled" title="Salamence" onclick="openModal('Exodia')">
+          <span class="slot-number">02</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/373.png" class="poke-sprite" alt="Salamence">
+          <span class="slot-label poke-name">Exodia</span>
+        </div>
+        <div class="slot filled" title="Arcanine" onclick="openModal('Oli')">
+          <span class="slot-number">03</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" class="poke-sprite" alt="Arcanine">
+          <span class="slot-label poke-name">Oli</span>
+        </div>
+        <div class="slot filled" title="Hydreigon" onclick="openModal('Sisax')">
+          <span class="slot-number">04</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/635.png" class="poke-sprite" alt="Hydreigon">
+          <span class="slot-label poke-name">Sisax</span>
+        </div>
+        <div class="slot filled" title="Florges" onclick="openModal('BU ALVARO')">
+          <span class="slot-number">05</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/671.png" class="poke-sprite" alt="Florges">
+          <span class="slot-label poke-name">BU ALVARO</span>
+        </div>
+        <div class="slot filled" title="Ferrothorn" onclick="openModal('Argenta')">
+          <span class="slot-number">06</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/598.png" class="poke-sprite" alt="Ferrothorn">
+          <span class="slot-label poke-name">Argenta</span>
+        </div>
+        <div class="slot filled" title="Slowbro" onclick="openModal('Victribell')">
+          <span class="slot-number">07</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/80.png" class="poke-sprite" alt="Slowbro">
+          <span class="slot-label poke-name">Victribell</span>
+        </div>
+        <div class="slot filled" title="Dusknoir" onclick="openModal('Tsitoo')">
+          <span class="slot-number">08</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/477.png" class="poke-sprite" alt="Dusknoir">
+          <span class="slot-label poke-name">Tsitoo</span>
+        </div>
+        <div class="slot filled" title="Magmar" onclick="openModal('Follacabras')">
+          <span class="slot-number">09</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/126.png" class="poke-sprite" alt="Magmar">
+          <span class="slot-label poke-name">Follacabras</span>
+        </div>
+        <div class="slot filled" title="Mega Tyranitar" onclick="openModal('Madness')">
+          <span class="slot-number">10</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10049.png" class="poke-sprite" alt="Mega Tyranitar">
+          <span class="slot-label poke-name">Madness</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTICIPANTE 2: ADRIÁN -->
+    <div class="participant-card" style="border-color:rgba(21,101,192,0.4);">
+      <div class="card-header">
+        <div class="trainer-avatar" style="background: linear-gradient(135deg,#1565C0,#42A5F5); font-size:0.55rem;">ADR</div>
+        <div class="trainer-info">
+          <h2>Adrián</h2>
+          <p>Entrenador · 10 Pokémon</p>
+        </div>
+        <span class="progress-pill" style="background:rgba(21,101,192,0.2);border-color:rgba(21,101,192,0.5);color:#42A5F5;">10 / 10</span>
+      </div>
+      <div class="slots">
+        <div class="slot filled" title="Blaziken" onclick="openModal('Emilio')">
+          <span class="slot-number">01</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/257.png" class="poke-sprite" alt="Blaziken">
+          <span class="slot-label poke-name">Emilio</span>
+        </div>
+        <div class="slot filled" title="Blastoise" onclick="openModal('Hugo')">
+          <span class="slot-number">02</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/9.png" class="poke-sprite" alt="Blastoise">
+          <span class="slot-label poke-name">Hugo</span>
+        </div>
+        <div class="slot filled" title="Dragonite" onclick="openModal('Marcos Maz')">
+          <span class="slot-number">03</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/149.png" class="poke-sprite" alt="Dragonite">
+          <span class="slot-label poke-name">Marcos Maz</span>
+        </div>
+        <div class="slot filled" title="Togekiss" onclick="openModal('Cuervo')">
+          <span class="slot-number">04</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/468.png" class="poke-sprite" alt="Togekiss">
+          <span class="slot-label poke-name">Cuervo</span>
+        </div>
+        <div class="slot filled" title="Chandelure" onclick="openModal('Wickh')">
+          <span class="slot-number">05</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/609.png" class="poke-sprite" alt="Chandelure">
+          <span class="slot-label poke-name">Wickh</span>
+        </div>
+        <div class="slot filled" title="Gigalith" onclick="openModal('Zoro')">
+          <span class="slot-number">06</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/526.png" class="poke-sprite" alt="Gigalith">
+          <span class="slot-label poke-name">Zoro</span>
+        </div>
+        <div class="slot filled" title="Goodra" onclick="openModal('Baboso')">
+          <span class="slot-number">07</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/706.png" class="poke-sprite" alt="Goodra">
+          <span class="slot-label poke-name">Baboso</span>
+        </div>
+        <div class="slot filled" title="Porygon2" onclick="openModal('Virus')">
+          <span class="slot-number">08</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/233.png" class="poke-sprite" alt="Porygon2">
+          <span class="slot-label poke-name">Virus</span>
+        </div>
+        <div class="slot filled" title="Flygon" onclick="openModal('Berrik')">
+          <span class="slot-number">09</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/330.png" class="poke-sprite" alt="Flygon">
+          <span class="slot-label poke-name">Berrik</span>
+        </div>
+        <div class="slot filled" title="Mega Alakazam" onclick="openModal('Bachiller')">
+          <span class="slot-number">10</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10037.png" class="poke-sprite" alt="Mega Alakazam">
+          <span class="slot-label poke-name">Bachiller</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTICIPANTE 3: CRISTOBAL -->
+    <div class="participant-card" style="border-color:rgba(46,125,50,0.4);">
+      <div class="card-header">
+        <div class="trainer-avatar" style="background: linear-gradient(135deg,#2e7d32,#66bb6a); font-size:0.55rem;">CRI</div>
+        <div class="trainer-info">
+          <h2>Cristobal</h2>
+          <p>Entrenador · 10 Pokémon</p>
+        </div>
+        <span class="progress-pill" style="background:rgba(46,125,50,0.2);border-color:rgba(46,125,50,0.5);color:#66bb6a;">10 / 10</span>
+      </div>
+      <div class="slots">
+        <div class="slot filled" title="Primarina" onclick="openModal('Esperanza')">
+          <span class="slot-number">01</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/730.png" class="poke-sprite" alt="Primarina">
+          <span class="slot-label poke-name">Esperanza</span>
+        </div>
+        <div class="slot filled" title="Machamp" onclick="openModal('Culturista')">
+          <span class="slot-number">02</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/68.png" class="poke-sprite" alt="Machamp">
+          <span class="slot-label poke-name">Culturista</span>
+        </div>
+        <div class="slot filled" title="Delphox" onclick="openModal('Zorris')">
+          <span class="slot-number">03</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/655.png" class="poke-sprite" alt="Delphox">
+          <span class="slot-label poke-name">Zorris</span>
+        </div>
+        <div class="slot filled" title="Dragonite" onclick="openModal('Barnie')">
+          <span class="slot-number">04</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/149.png" class="poke-sprite" alt="Dragonite">
+          <span class="slot-label poke-name">Barnie</span>
+        </div>
+        <div class="slot filled" title="Mamoswine" onclick="openModal('Cochinilla')">
+          <span class="slot-number">05</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/473.png" class="poke-sprite" alt="Mamoswine">
+          <span class="slot-label poke-name">Cochinilla</span>
+        </div>
+        <div class="slot filled" title="Celesteela" onclick="openModal('Nasa')">
+          <span class="slot-number">06</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/797.png" class="poke-sprite" alt="Celesteela">
+          <span class="slot-label poke-name">Nasa</span>
+        </div>
+        <div class="slot filled" title="Mega Steelix" onclick="openModal('Perlito')">
+          <span class="slot-number">07</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10072.png" class="poke-sprite" alt="Mega Steelix">
+          <span class="slot-label poke-name">Perlito</span>
+        </div>
+        <div class="slot filled" title="Gengar" onclick="openModal('CR7')">
+          <span class="slot-number">08</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" class="poke-sprite" alt="Gengar">
+          <span class="slot-label poke-name">CR7</span>
+        </div>
+        <div class="slot filled" title="Luxray" onclick="openModal('Eusevio')">
+          <span class="slot-number">09</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/405.png" class="poke-sprite" alt="Luxray">
+          <span class="slot-label poke-name">Eusevio</span>
+        </div>
+        <div class="slot filled" title="Manectric" onclick="openModal('Guau')">
+          <span class="slot-number">10</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/310.png" class="poke-sprite" alt="Manectric">
+          <span class="slot-label poke-name">Guau</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTICIPANTE 4: VICTORÍN -->
+    <div class="participant-card" style="border-color:rgba(123,31,162,0.4);">
+      <div class="card-header">
+        <div class="trainer-avatar" style="background: linear-gradient(135deg,#7b1fa2,#ce93d8); font-size:0.55rem;">VIC</div>
+        <div class="trainer-info">
+          <h2>Victorín</h2>
+          <p>Entrenador · 10 Pokémon</p>
+        </div>
+        <span class="progress-pill" style="background:rgba(123,31,162,0.2);border-color:rgba(123,31,162,0.5);color:#ce93d8;">10 / 10</span>
+      </div>
+      <div class="slots">
+        <div class="slot filled" title="Garchomp" onclick="openModal('Suarez')">
+          <span class="slot-number">01</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/445.png" class="poke-sprite" alt="Garchomp">
+          <span class="slot-label poke-name">Suarez</span>
+        </div>
+        <div class="slot filled" title="Tyranitar" onclick="openModal('Willyrex')">
+          <span class="slot-number">02</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/248.png" class="poke-sprite" alt="Tyranitar">
+          <span class="slot-label poke-name">Willyrex</span>
+        </div>
+        <div class="slot filled" title="Florges" onclick="openModal('Jugui')">
+          <span class="slot-number">03</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/671.png" class="poke-sprite" alt="Florges">
+          <span class="slot-label poke-name">Jugui</span>
+        </div>
+        <div class="slot filled" title="Charizard" onclick="openModal('Chorizord')">
+          <span class="slot-number">04</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png" class="poke-sprite" alt="Charizard">
+          <span class="slot-label poke-name">Chorizord</span>
+        </div>
+        <div class="slot filled" title="Slaking" onclick="openModal('Luisgar')">
+          <span class="slot-number">05</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/289.png" class="poke-sprite" alt="Slaking">
+          <span class="slot-label poke-name">Luisgar</span>
+        </div>
+        <div class="slot filled" title="Mega Blaziken" onclick="openModal('Modric')">
+          <span class="slot-number">06</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10050.png" class="poke-sprite" alt="Mega Blaziken">
+          <span class="slot-label poke-name">Modric</span>
+        </div>
+        <div class="slot filled" title="Golisopod" onclick="openModal('Mané')">
+          <span class="slot-number">07</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/768.png" class="poke-sprite" alt="Golisopod">
+          <span class="slot-label poke-name">Mané</span>
+        </div>
+        <div class="slot filled" title="Alakazam" onclick="openModal('Pedri')">
+          <span class="slot-number">08</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/65.png" class="poke-sprite" alt="Alakazam">
+          <span class="slot-label poke-name">Pedri</span>
+        </div>
+        <div class="slot filled" title="Talonflame" onclick="openModal('Valverde')">
+          <span class="slot-number">09</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/663.png" class="poke-sprite" alt="Talonflame">
+          <span class="slot-label poke-name">Valverde</span>
+        </div>
+        <div class="slot filled" title="Gardevoir" onclick="openModal('Fregona')">
+          <span class="slot-number">10</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/282.png" class="poke-sprite" alt="Gardevoir">
+          <span class="slot-label poke-name">Fregona</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTICIPANTE 5: FERNANDO -->
+    <div class="participant-card" style="border-color:rgba(255,140,0,0.4);">
+      <div class="card-header">
+        <div class="trainer-avatar" style="background: linear-gradient(135deg,#e65c00,#f9d423); font-size:0.55rem;">FER</div>
+        <div class="trainer-info">
+          <h2>Fernando</h2>
+          <p>Entrenador · 10 Pokémon</p>
+        </div>
+        <span class="progress-pill" style="background:rgba(255,140,0,0.2);border-color:rgba(255,140,0,0.5);color:#f9d423;">10 / 10</span>
+      </div>
+      <div class="slots">
+        <div class="slot filled" title="Archeops" onclick="openModal('Pajaroto')">
+          <span class="slot-number">01</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/567.png" class="poke-sprite" alt="Archeops">
+          <span class="slot-label poke-name">Pajaroto</span>
+        </div>
+        <div class="slot filled" title="Metagross" onclick="openModal('N')">
+          <span class="slot-number">02</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/376.png" class="poke-sprite" alt="Metagross">
+          <span class="slot-label poke-name">N</span>
+        </div>
+        <div class="slot filled" title="Mega Aerodactyl" onclick="openModal('Boludator')">
+          <span class="slot-number">03</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10042.png" class="poke-sprite" alt="Mega Aerodactyl">
+          <span class="slot-label poke-name">Boludator</span>
+        </div>
+        <div class="slot filled" title="Dragonite" onclick="openModal('Samplo')">
+          <span class="slot-number">04</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/149.png" class="poke-sprite" alt="Dragonite">
+          <span class="slot-label poke-name">Samplo</span>
+        </div>
+        <div class="slot filled" title="Gardevoir" onclick="openModal('Ephanet')">
+          <span class="slot-number">05</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/282.png" class="poke-sprite" alt="Gardevoir">
+          <span class="slot-label poke-name">Ephanet</span>
+        </div>
+        <div class="slot filled" title="Greninja" onclick="openModal('Gustavo')">
+          <span class="slot-number">06</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/658.png" class="poke-sprite" alt="Greninja">
+          <span class="slot-label poke-name">Gustavo</span>
+        </div>
+        <div class="slot filled" title="Hydreigon" onclick="openModal('Fernanda')">
+          <span class="slot-number">07</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/635.png" class="poke-sprite" alt="Hydreigon">
+          <span class="slot-label poke-name">Fernanda</span>
+        </div>
+        <div class="slot filled" title="Blaziken" onclick="openModal('KFC')">
+          <span class="slot-number">08</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/257.png" class="poke-sprite" alt="Blaziken">
+          <span class="slot-label poke-name">KFC</span>
+        </div>
+        <div class="slot filled" title="Aggron" onclick="openModal('Arnold')">
+          <span class="slot-number">09</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" class="poke-sprite" alt="Aggron">
+          <span class="slot-label poke-name">Arnold</span>
+        </div>
+        <div class="slot filled" title="Sableye" onclick="openModal('Jeje')">
+          <span class="slot-number">10</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/302.png" class="poke-sprite" alt="Sableye">
+          <span class="slot-label poke-name">Jeje</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTICIPANTE 6: ÁLVARO -->
+    <div class="participant-card" style="border-color:rgba(255,69,0,0.4);">
+      <div class="card-header">
+        <div class="trainer-avatar" style="background: linear-gradient(135deg,#ff4500,#ff8c00); font-size:0.55rem;">ALV</div>
+        <div class="trainer-info">
+          <h2>Álvaro</h2>
+          <p>Entrenador · 10 Pokémon</p>
+        </div>
+        <span class="progress-pill" style="background:rgba(255,69,0,0.2);border-color:rgba(255,69,0,0.5);color:#ff8c00;">10 / 10</span>
+      </div>
+      <div class="slots">
+        <div class="slot filled" title="Incineroar" onclick="openModal('Álvaro')">
+          <span class="slot-number">01</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/727.png" class="poke-sprite" alt="Incineroar">
+          <span class="slot-label poke-name">Álvaro</span>
+        </div>
+        <div class="slot filled" title="Slaking" onclick="openModal('Vri')">
+          <span class="slot-number">02</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/289.png" class="poke-sprite" alt="Slaking">
+          <span class="slot-label poke-name">Vri</span>
+        </div>
+        <div class="slot filled" title="Venusaur" onclick="openModal('Dino')">
+          <span class="slot-number">03</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/3.png" class="poke-sprite" alt="Venusaur">
+          <span class="slot-label poke-name">Dino</span>
+        </div>
+        <div class="slot filled" title="Aegislash" onclick="openModal('Damer')">
+          <span class="slot-number">04</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/681.png" class="poke-sprite" alt="Aegislash">
+          <span class="slot-label poke-name">Damer</span>
+        </div>
+        <div class="slot filled" title="Primarina" onclick="openModal('Maro')">
+          <span class="slot-number">05</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/730.png" class="poke-sprite" alt="Primarina">
+          <span class="slot-label poke-name">Maro</span>
+        </div>
+        <div class="slot filled" title="Mega Sceptile" onclick="openModal('Tricolor')">
+          <span class="slot-number">06</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10065.png" class="poke-sprite" alt="Mega Sceptile">
+          <span class="slot-label poke-name">Tricolor</span>
+        </div>
+        <div class="slot filled" title="Trevenant" onclick="openModal('Fantasmha')">
+          <span class="slot-number">07</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/709.png" class="poke-sprite" alt="Trevenant">
+          <span class="slot-label poke-name">Fantasmha</span>
+        </div>
+        <div class="slot filled" title="Crobat" onclick="openModal('Carisma')">
+          <span class="slot-number">08</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/169.png" class="poke-sprite" alt="Crobat">
+          <span class="slot-label poke-name">Carisma</span>
+        </div>
+        <div class="slot filled" title="Amoonguss" onclick="openModal('Tripulante')">
+          <span class="slot-number">09</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/591.png" class="poke-sprite" alt="Amoonguss">
+          <span class="slot-label poke-name">Tripulante</span>
+        </div>
+        <div class="slot filled" title="Salamence" onclick="openModal('Juan')">
+          <span class="slot-number">10</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/373.png" class="poke-sprite" alt="Salamence">
+          <span class="slot-label poke-name">Juan</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- TORNEO -->
+  <div class="divider" style="margin-top:3rem;"><span>🏆 TORNEO 🏆</span></div>
+
+  <!-- FASE DE GRUPOS -->
+  <div class="divider"><span>⚔ FASE DE GRUPOS ⚔</span></div>
+  <div class="grupos-grid">
+
+    <!-- GRUPO A -->
+    <div class="grupo-card">
+      <div class="grupo-title">Grupo A</div>
+      <table class="grupo-table">
+        <thead>
+          <tr>
+            <th class="col-name"></th>
+            <th>J</th><th>G</th><th>E</th><th>P</th><th>PF</th><th>PC</th><th>Pt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-first">
+            <td class="col-name">🥇 Fire</td>
+            <td>6</td><td>4</td><td>2</td><td>0</td><td>14</td><td>0</td><td class="col-pt">4</td>
+          </tr>
+          <tr class="row-second">
+            <td class="col-name">🥈 Cristobal</td>
+            <td>6</td><td>2</td><td>1</td><td>3</td><td>8</td><td>8</td><td class="col-pt">2</td>
+          </tr>
+          <tr class="row-third">
+            <td class="col-name">Visturin</td>
+            <td>6</td><td>1</td><td>1</td><td>4</td><td>4</td><td>18</td><td class="col-pt">1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- GRUPO B -->
+    <div class="grupo-card">
+      <div class="grupo-title">Grupo B</div>
+      <table class="grupo-table">
+        <thead>
+          <tr>
+            <th class="col-name"></th>
+            <th>J</th><th>G</th><th>E</th><th>P</th><th>PF</th><th>PC</th><th>Pt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-first">
+            <td class="col-name">🥇 Bolushow</td>
+            <td>6</td><td>4</td><td>1</td><td>1</td><td>16</td><td>3</td><td class="col-pt">4</td>
+          </tr>
+          <tr class="row-second">
+            <td class="col-name">🥈 Nimiel</td>
+            <td>6</td><td>3</td><td>0</td><td>3</td><td>10</td><td>12</td><td class="col-pt">3</td>
+          </tr>
+          <tr class="row-third">
+            <td class="col-name">Noobtroll</td>
+            <td>6</td><td>1</td><td>1</td><td>4</td><td>4</td><td>15</td><td class="col-pt">1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /grupos-grid -->
+
+  <!-- LLAVES -->
+  <div class="divider" style="margin-top:2.5rem;"><span>⚔ LLAVES ⚔</span></div>
+
+  <div class="bracket-wrapper">
+
+    <!-- 5º/6º PUESTO -->
+    <div class="bracket-section">
+      <div class="bracket-round-label">5º / 6º Puesto</div>
+      <div class="bracket-match">
+        <div class="bracket-team winner">Adrián <span class="bracket-score">2</span></div>
+        <div class="bracket-team loser">Victorín <span class="bracket-score">0</span></div>
+      </div>
+    </div>
+
+    <!-- SEMIFINALES -->
+    <div class="bracket-section">
+      <div class="bracket-round-label">Semifinales</div>
+      <div class="bracket-match">
+        <div class="bracket-team loser">Álvaro <span class="bracket-score">0</span></div>
+        <div class="bracket-team winner">Fernando <span class="bracket-score">2</span></div>
+      </div>
+      <div class="bracket-match" style="margin-top:0.75rem;">
+        <div class="bracket-team winner">Sergio <span class="bracket-score">2</span></div>
+        <div class="bracket-team loser">Cristobal <span class="bracket-score">0</span></div>
+      </div>
+    </div>
+
+    <!-- 3º/4º PUESTO -->
+    <div class="bracket-section">
+      <div class="bracket-round-label">3º / 4º Puesto</div>
+      <div class="bracket-match">
+        <div class="bracket-team winner">🥉 Álvaro <span class="bracket-score">2</span></div>
+        <div class="bracket-team loser">Cristobal <span class="bracket-score">0</span></div>
+      </div>
+    </div>
+
+    <!-- FINAL -->
+    <div class="bracket-section bracket-final">
+      <div class="bracket-round-label">Final</div>
+      <div class="bracket-match bracket-match-final">
+        <div class="bracket-team winner">🥇 Sergio <span class="bracket-score">2</span></div>
+        <div class="bracket-team loser">🥈 Fernando <span class="bracket-score">1</span></div>
+      </div>
+    </div>
+
+  </div><!-- /bracket-wrapper -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <img id="modalSprite" src="" class="modal-sprite" alt="">
+      <div class="modal-title-block">
+        <div class="modal-nickname" id="modalNickname"></div>
+        <div class="modal-species" id="modalSpecies"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <div class="modal-section-title">⚔ Ataques</div>
+        <div class="modal-attacks" id="modalAttacks"></div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-icon">✨</span>
+        <span class="modal-row-label">Habilidad</span>
+        <span class="modal-row-value" id="modalAbility"></span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-icon">🎒</span>
+        <span class="modal-row-label">Objeto</span>
+        <span class="modal-row-value" id="modalItem"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const pokeData = {
+  "Casillas": {
+    species: "Excadrill",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/530.png",
+    attacks: ["Puño Meteoro", "Mil Flechas", "Fuerza Bruta", "Garra Dragón"],
+    ability: "Energía Pura",
+    item: "Cinta Elegida"
+  },
+  "Exodia": {
+    species: "Salamence",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/373.png",
+    attacks: ["Velocidad Extrema", "Latigazo", "A Bocajarro", "Ataque Fulgor"],
+    ability: "Piel Celeste",
+    item: "Vidasfera"
+  },
+  "Oli": {
+    species: "Arcanine",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png",
+    attacks: ["Fuerza Bruta", "V de Fuego", "Tormenta de Diamantes", "Rueda Doble"],
+    ability: "Tierra del Ocaso",
+    item: "Pañuelo Elegido"
+  },
+  "Sisax": {
+    species: "Hydreigon",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/635.png",
+    attacks: ["Pulso Noche", "Géiser Fotónico", "Pulso Dragón", "Geocontrol"],
+    ability: "Adaptable",
+    item: "Hierba Única"
+  },
+  "BU ALVARO": {
+    species: "Florges",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/671.png",
+    attacks: ["Ventisca", "Bomba Ígnea", "Beso Drenaje", "Chorro de Vapor"],
+    ability: "Viscosidad",
+    item: "Gafas Elegidas"
+  },
+  "Argenta": {
+    species: "Ferrothorn",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/598.png",
+    attacks: ["Barrera Espinosa", "Drenadoras", "Tóxico", "Recogearena"],
+    ability: "Absorbe Fuego",
+    item: "Casco Dentado"
+  },
+  "Victribell": {
+    species: "Slowbro",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/80.png",
+    attacks: ["Escaldar", "Gigadreando", "Fuerza Lunar", "Onda Mental"],
+    ability: "Ímpetu Ardiente",
+    item: "Llamasfera"
+  },
+  "Tsitoo": {
+    species: "Dusknoir",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/477.png",
+    attacks: ["Síntesis", "Búnker", "Puño Sombra", "Puño Drenaje"],
+    ability: "Agallas",
+    item: "Restos"
+  },
+  "Follacabras": {
+    species: "Magmar",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/126.png",
+    attacks: ["Canto Helado", "Somnífero", "Sombra Vil", "Picadura"],
+    ability: "Impostor",
+    item: "Mineral Evolutivo"
+  },
+  "Madness": {
+    species: "Mega Tyranitar",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10049.png",
+    attacks: ["Tormenta de Diamantes", "Patada Salto Alta", "Al Ataque", "Robasombra"],
+    ability: "Roca Sólida",
+    item: "Tyranitarita"
+  },
+  "Emilio": {
+    species: "Blaziken",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/257.png",
+    attacks: ["Puño Drenaje", "Látigo Ígneo", "Tormenta de Diamantes", "Ultrapuño"],
+    ability: "Compensación",
+    item: "Cinta Elegida"
+  },
+  "Hugo": {
+    species: "Blastoise",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/9.png",
+    attacks: ["Aerochorro", "Onda Mental", "Ventisca", "Chorro de Vapor"],
+    ability: "Letargo Perenne",
+    item: "Baya Zidra"
+  },
+  "Marcos Maz": {
+    species: "Dragonite",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/149.png",
+    attacks: ["Ataque Fulgor", "Pico Cañón", "Carga Dragón", "Cambio de Marcha"],
+    ability: "Telepatía",
+    item: "Vidasfera"
+  },
+  "Cuervo": {
+    species: "Togekiss",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/468.png",
+    attacks: ["Ala Mortífera", "Beso Drenaje", "Fuerza Lunar", "Escudo Real"],
+    ability: "Coránima",
+    item: "Raíz Grande"
+  },
+  "Wickh": {
+    species: "Chandelure",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/609.png",
+    attacks: ["Aerochorro", "Brillo Mágico", "Rayo Umbrío", "Escaldar"],
+    ability: "Momia",
+    item: "Gafas Elegidas"
+  },
+  "Zoro": {
+    species: "Gigalith",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/526.png",
+    attacks: ["Trampa Rocas", "Fuego Fatuo", "Sol Matinal", "Cuerno Certero"],
+    ability: "Polvo Escudo",
+    item: "Restos"
+  },
+  "Baboso": {
+    species: "Goodra",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/706.png",
+    attacks: ["Bola Neblina", "Tajo Aéreo", "Pulso Dragón", "Fogonazo"],
+    ability: "Humedad",
+    item: "Chaleco Asalto"
+  },
+  "Virus": {
+    species: "Porygon2",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/233.png",
+    attacks: ["Golpe Umbrío", "Furia Natural", "Llama Azul", "Danza Espada"],
+    ability: "Impostor",
+    item: "Mineral Evolutivo"
+  },
+  "Berrik": {
+    species: "Flygon",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/330.png",
+    attacks: ["Espora", "Red Viscosa", "Puño Drenaje", "Terremoto"],
+    ability: "Entusiasmo",
+    item: "Banda Focus"
+  },
+  "Bachiller": {
+    species: "Mega Alakazam",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10037.png",
+    attacks: ["Bola Sombra", "Bomba Ígnea", "Maquinación", "Danza Despertar"],
+    ability: "Alma Cura",
+    item: "Alakazamita"
+  },
+  "Esperanza": {
+    species: "Primarina",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/730.png",
+    attacks: ["Amnesia", "Surf", "Pulso Dragón", "Luz Aniquiladora"],
+    ability: "Simple",
+    item: "Restos"
+  },
+  "Culturista": {
+    species: "Machamp",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/68.png",
+    attacks: ["Puño Drenaje", "Terremoto", "Golpe Umbrío", "Cambio de Marcha"],
+    ability: "Rompemoldes",
+    item: "Cinta Fuerte"
+  },
+  "Zorris": {
+    species: "Delphox",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/655.png",
+    attacks: ["Joya de Luz", "Llama Fusión", "Paz Mental", "Cabeza Sorpresa"],
+    ability: "Cabeza Roca",
+    item: "Vidasfera"
+  },
+  "Barnie": {
+    species: "Dragonite",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/149.png",
+    attacks: ["Tormenta de Diamantes", "Protección", "Cometa Draco", "Ascenso Draco"],
+    ability: "Firmeza",
+    item: "Aerostal Z"
+  },
+  "Cochinilla": {
+    species: "Mamoswine",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/473.png",
+    attacks: ["Batido", "Ventisca", "Gas Venenoso", "Psicocolmillo"],
+    ability: "Cosecha",
+    item: "Baya Zidra"
+  },
+  "Nasa": {
+    species: "Celesteela",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/797.png",
+    attacks: ["Espada Santa", "Disparo Espejo", "Ala Mortífera", "Viento Afín"],
+    ability: "Rompemoldes",
+    item: "Campana Concha"
+  },
+  "Perlito": {
+    species: "Mega Steelix",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10072.png",
+    attacks: ["Taladradora", "Trampa Rocas", "Cabeza de Hierro", "Batido"],
+    ability: "Batería",
+    item: "Steelixita"
+  },
+  "CR7": {
+    species: "Gengar",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png",
+    attacks: ["Gigadrenado", "Carga Tóxica", "Liofilización", "Brillo Mágico"],
+    ability: "Ultraimpulso",
+    item: "Gafas Especiales"
+  },
+  "Eusevio": {
+    species: "Luxray",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/405.png",
+    attacks: ["Detección", "Chispa", "Patada Salto Alta", "Sol Matinal"],
+    ability: "Entusiasmo",
+    item: "Imán"
+  },
+  "Guau": {
+    species: "Manectric",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/310.png",
+    attacks: ["Llama Fusión", "Batido", "Escudo Tatami", "Danza Pétalo"],
+    ability: "Mutatipo",
+    item: "Tabla Pradal"
+  },
+  "Suarez": {
+    species: "Garchomp",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/445.png",
+    attacks: ["Espada Santa", "Terremoto", "Respiro", "Puños Plasma"],
+    ability: "Regia Presencia",
+    item: "Paracontacto"
+  },
+  "Willyrex": {
+    species: "Tyranitar",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/248.png",
+    attacks: ["Poder Pasado", "Garra Dragón", "Filo del Abismo", "Cascada"],
+    ability: "Antídoto",
+    item: "Banda Focus"
+  },
+  "Jugui": {
+    species: "Florges",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/671.png",
+    attacks: ["Liofilización", "Tierra Viva", "Púas Tóxicas", "Vozarrón"],
+    ability: "Garra Dura",
+    item: "Restos"
+  },
+  "Chorizord": {
+    species: "Charizard",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png",
+    attacks: ["Infortunio", "Lanzallamas", "Respiro", "Surf"],
+    ability: "Velo Agua",
+    item: "Roca del Rey"
+  },
+  "Luisgar": {
+    species: "Slaking",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/289.png",
+    attacks: ["Terremoto", "Puño Mareo", "Danza Espada", "Arrumaco"],
+    ability: "Cólera",
+    item: "Casco Dentado"
+  },
+  "Modric": {
+    species: "Mega Blaziken",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10050.png",
+    attacks: ["Meteoimpacto", "Plancha Voladora", "Lanzallamas", "Respiro"],
+    ability: "Ignorante",
+    item: "Blazikenita"
+  },
+  "Mané": {
+    species: "Golisopod",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/768.png",
+    attacks: ["Asta Drenaje", "Puño Trueno", "Taladradora", "Amortiguador"],
+    ability: "Revés",
+    item: "Vidasfera"
+  },
+  "Pedri": {
+    species: "Alakazam",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/65.png",
+    attacks: ["Sentencia", "Pirotecnia", "Joya de Luz", "Red Viscosa"],
+    ability: "Ritmo Propio",
+    item: "Gafas Especiales"
+  },
+  "Valverde": {
+    species: "Talonflame",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/663.png",
+    attacks: ["Carga Parábola", "Fuego Sagrado", "Amortiguador", "Onda Mental"],
+    ability: "Quitanieves",
+    item: "Seguro Debilidad"
+  },
+  "Fregona": {
+    species: "Gardevoir",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/282.png",
+    attacks: ["Joya de Luz", "Rayo Umbrío", "Tierra Viva", "Somnífero"],
+    ability: "Escudo Limitado",
+    item: "Cinta Experto"
+  },
+  "Pajaroto": {
+    species: "Archeops",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/567.png",
+    attacks: ["Cambio de Marcha", "Tijera X", "Mil Flechas", "Cabeza de Hierro"],
+    ability: "Autoestima",
+    item: "Banda Focus"
+  },
+  "N": {
+    species: "Metagross",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/376.png",
+    attacks: ["Cambio de Marcha", "Rueda Doble", "Psicocolmillo", "Patada Salto Alta"],
+    ability: "Cuerpo Llama",
+    item: "Seguro Debilidad"
+  },
+  "Boludator": {
+    species: "Mega Aerodactyl",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10042.png",
+    attacks: ["Cambio de Marcha", "Mil Flechas", "Cabeza de Hierro", "Bomba Germen"],
+    ability: "Potencia",
+    item: "Aerodactylita"
+  },
+  "Samplo": {
+    species: "Dragonite",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/149.png",
+    attacks: ["Latigazo", "Cambio de Marcha", "Robasombra", "Mil Flechas"],
+    ability: "Pelaje Recio",
+    item: "Periscopio"
+  },
+  "Ephanet": {
+    species: "Gardevoir",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/282.png",
+    attacks: ["Psíquico", "Rayo Hielo", "Danza Aleteo", "Llama Fusión"],
+    ability: "Tierra del Ocaso",
+    item: "Gafas Especiales"
+  },
+  "Gustavo": {
+    species: "Greninja",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/658.png",
+    attacks: ["Fogonazo", "Danza Aleteo", "Llama Azul", "Ala Mortífera"],
+    ability: "Multitipo",
+    item: "Cinta Experto"
+  },
+  "Fernanda": {
+    species: "Hydreigon",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/635.png",
+    attacks: ["Rayo Umbrío", "Danza Llama", "Luz Lunar", "Rayo"],
+    ability: "Poder Solar",
+    item: "Restos"
+  },
+  "KFC": {
+    species: "Blaziken",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/257.png",
+    attacks: ["Latigazo", "Robasombra", "Cambio de Marcha", "Llave Corsé"],
+    ability: "Fuerza Cerebral",
+    item: "Tabla Pardal"
+  },
+  "Arnold": {
+    species: "Aggron",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png",
+    attacks: ["Mil Flechas", "Rueda Doble", "Luz Lunar", "Machada"],
+    ability: "Metal Pesado",
+    item: "Cinta Fuerte"
+  },
+  "Jeje": {
+    species: "Sableye",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/302.png",
+    attacks: ["Picotazo Venenoso", "Doble Bofetón", "Polvo Ira", "Protección"],
+    ability: "Impostor",
+    item: "Pañuelo Elegido"
+  },
+  "Álvaro": {
+    species: "Incineroar",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/727.png",
+    attacks: ["Puño Fuego", "Puya Nociva", "Pantalla de Luz", "Última Palabra"],
+    ability: "Despiste",
+    item: "Refleluz"
+  },
+  "Vri": {
+    species: "Slaking",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/289.png",
+    attacks: ["Asta Drenaje", "Puños Plasma", "Psicocorte", "Síntesis"],
+    ability: "Remoto",
+    item: "Vidasfera"
+  },
+  "Dino": {
+    species: "Venusaur",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/3.png",
+    attacks: ["Pulso Dragón", "Agua Lodosa", "Resplandor", "Humareda"],
+    ability: "Cuerpo Puro",
+    item: "Chaleco Asalto"
+  },
+  "Damer": {
+    species: "Aegislash",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/681.png",
+    attacks: ["Infortunio", "Bomba Lodo", "Asta Drenaje", "Relajo"],
+    ability: "Pelaje Recio",
+    item: "Casco Dentado"
+  },
+  "Maro": {
+    species: "Primarina",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/730.png",
+    attacks: ["Gigadrenado", "Rayo Hielo", "Infortunio", "Llamarada"],
+    ability: "Ignorante",
+    item: "Raíz Grande"
+  },
+  "Tricolor": {
+    species: "Mega Sceptile",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10065.png",
+    attacks: ["Bomba Germen", "Puño Drenaje", "Fuerza Telúrica", "Cambio de Marcha"],
+    ability: "Rastro",
+    item: "Sceptilita"
+  },
+  "Fantasmha": {
+    species: "Trevenant",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/709.png",
+    attacks: ["Infortunio", "Puya Nociva", "Arrumaco", "Pulso Primigenio"],
+    ability: "Impostor",
+    item: "Pañuelo Elegido"
+  },
+  "Carisma": {
+    species: "Crobat",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/169.png",
+    attacks: ["Puya Nociva", "Ascenso Draco", "Ida y Vuelta", "Hilo Venenoso"],
+    ability: "Ojo Compuesto",
+    item: "Periscopio"
+  },
+  "Tripulante": {
+    species: "Amoonguss",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/591.png",
+    attacks: ["Infortunio", "Búnker", "Sustituto", "Relajo"],
+    ability: "Revés",
+    item: "Lodo Negro"
+  },
+  "Juan": {
+    species: "Salamence",
+    sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/373.png",
+    attacks: ["Pico Taladro", "Puño Drenaje", "Fuerza Telúrica", "Búnker"],
+    ability: "Piel Eléctrica",
+    item: "Restos"
+  }
+};
+
+function openModal(nickname) {
+  const d = pokeData[nickname];
+  if (!d) return;
+  document.getElementById('modalSprite').src = d.sprite;
+  document.getElementById('modalNickname').textContent = nickname;
+  document.getElementById('modalSpecies').textContent = d.species;
+  document.getElementById('modalAbility').textContent = d.ability;
+  document.getElementById('modalItem').textContent = d.item;
+  const attacksEl = document.getElementById('modalAttacks');
+  attacksEl.innerHTML = d.attacks.map(a => `<div class="attack-pill">${a}</div>`).join('');
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModalBtn() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalBtn();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalBtn(); });
+</script>
+</body>
+</html>
